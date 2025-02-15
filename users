@@ -1,0 +1,46 @@
+# Login to Azure account
+Connect-AzAccount
+
+# Set output file paths
+$subscriptionOutputFile = "C:\Users\heero\Documents\Azure_RBAC_Subscription_RoleAssignments.csv"
+$mgmtGroupOutputFile = "C:\Users\heero\Documents\Azure_RBAC_ManagementGroup_RoleAssignments.csv"
+
+# Define your management groups
+$managementGroups = @("MG1", "MG2", "Tenant Root Group")  # Replace with actual names
+
+# Function to get RBAC role assignments and save them to a CSV file
+function Get-RBACAssignments {
+    param (
+        [string]$scope,
+        [string]$outputFile
+    )
+
+    # Get all role assignments for the given scope
+    $roleAssignments = Get-AzRoleAssignment -Scope $scope
+
+    # Process and export role assignments
+    $roleAssignments | Select-Object `
+        @{Label="RoleName"; Expression={$_.RoleDefinitionName}},
+        @{Label="PrincipalName"; Expression={$_.SignInName}},
+        @{Label="PrincipalType"; Expression={$_.PrincipalType}},
+        @{Label="Scope"; Expression={$_.Scope}},
+        @{Label="AssignmentSource"; Expression={if ($_.PrincipalType -eq "User") {"Direct"} else {"Group"}}} |
+    Export-Csv -Path $outputFile -NoTypeInformation -Encoding UTF8 -Append
+
+    Write-Output "Saved RBAC assignments to $outputFile"
+}
+
+# 1. Get role assignments for the current subscription
+$subscriptionId = (Get-AzContext).Subscription.Id
+$subscriptionScope = "/subscriptions/$subscriptionId"
+Get-RBACAssignments -scope $subscriptionScope -outputFile $subscriptionOutputFile
+
+# 2. Get role assignments for each management group
+foreach ($mgmtGroup in $managementGroups) {
+    $managementGroupScope = "/providers/Microsoft.Management/managementGroups/$mgmtGroup"
+    Get-RBACAssignments -scope $managementGroupScope -outputFile $mgmtGroupOutputFile
+}
+
+Write-Output "Script execution completed. Files are saved at:"
+Write-Output $subscriptionOutputFile
+Write-Output $mgmtGroupOutputFile
