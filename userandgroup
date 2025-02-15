@@ -1,0 +1,120 @@
+# Install the Az module if not already installed
+Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force
+
+# Connect to Azure account
+Connect-AzAccount
+
+# Define the list of management groups and subscription ID
+$managementGroups = @(
+    "/providers/Microsoft.Management/managementGroups/9779ba47-ce34-4fa0-a698-002922878559",
+    "/providers/Microsoft.Management/managementGroups/MG1",
+    "/providers/Microsoft.Management/managementGroups/MG2"
+)
+$subscriptionId = "d51cb3fa-7290-407d-aa81-1bca0fcb2140"
+
+# Initialize an array to store role assignments
+$allRoleAssignments = @()
+
+# Function to retrieve role assignments for a given scope
+function Get-RoleAssignmentsForScope {
+    param (
+        [string]$scope
+    )
+
+    Write-Output "Fetching role assignments for scope: $scope"
+
+    # Get all role assignments, including group-based assignments
+    $roleAssignments = Get-AzRoleAssignment -Scope $scope -ExpandPrincipalGroups
+
+    # Add to the global array
+    $global:allRoleAssignments += $roleAssignments
+}
+
+# Retrieve role assignments for each management group
+foreach ($mg in $managementGroups) {
+    Get-RoleAssignmentsForScope -scope $mg
+}
+
+# Retrieve role assignments for the subscription
+Get-RoleAssignmentsForScope -scope "/subscriptions/$subscriptionId"
+
+# Export the full list of role assignments to a CSV
+$allRoleAssignments | Export-Csv -Path "C:\AzureRoleAssignments.csv" -NoTypeInformation
+
+# Filter and categorize direct assignments vs group-based assignments
+$directAssignments = $allRoleAssignments | Where-Object { $_.PrincipalType -eq "User" }
+$groupAssignments = $allRoleAssignments | Where-Object { $_.PrincipalType -eq "Group" }
+
+# Export direct and group-based assignments to separate files
+$directAssignments | Export-Csv -Path "C:\AzureDirectAssignments.csv" -NoTypeInformation
+$groupAssignments | Export-Csv -Path "C:\AzureGroupAssignments.csv" -NoTypeInformation
+
+Write-Output "Export completed. Files saved to C:\"
+
+
+Fetching role assignments for scope: /providers/Microsoft.Management/managementGroups/9779ba47-ce34-4fa0-a698-002922878559
+Get-AzRoleAssignment : Parameter set cannot be resolved using the specified named parameters.
+At line:9 char:24
++ ... signments = Get-AzRoleAssignment -Scope $scope -ExpandPrincipalGroups ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Get-AzRoleAssignment], ParameterBindingException
+    + FullyQualifiedErrorId : AmbiguousParameterSet,Microsoft.Azure.Commands.Resources.GetAzureRoleAssignmentCommand
+
+Fetching role assignments for scope: /providers/Microsoft.Management/managementGroups/MG1
+Get-AzRoleAssignment : Parameter set cannot be resolved using the specified named parameters.
+At line:9 char:24
++ ... signments = Get-AzRoleAssignment -Scope $scope -ExpandPrincipalGroups ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Get-AzRoleAssignment], ParameterBindingException
+    + FullyQualifiedErrorId : AmbiguousParameterSet,Microsoft.Azure.Commands.Resources.GetAzureRoleAssignmentCommand
+
+Fetching role assignments for scope: /providers/Microsoft.Management/managementGroups/MG2
+Get-AzRoleAssignment : Parameter set cannot be resolved using the specified named parameters.
+At line:9 char:24
++ ... signments = Get-AzRoleAssignment -Scope $scope -ExpandPrincipalGroups ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Get-AzRoleAssignment], ParameterBindingException
+    + FullyQualifiedErrorId : AmbiguousParameterSet,Microsoft.Azure.Commands.Resources.GetAzureRoleAssignmentCommand
+
+PS C:\Users\heero>
+PS C:\Users\heero> # Retrieve role assignments for the subscription
+PS C:\Users\heero> Get-RoleAssignmentsForScope -scope "/subscriptions/$subscriptionId"
+Fetching role assignments for scope: /subscriptions/d51cb3fa-7290-407d-aa81-1bca0fcb2140
+Get-AzRoleAssignment : Parameter set cannot be resolved using the specified named parameters.
+At line:9 char:24
++ ... signments = Get-AzRoleAssignment -Scope $scope -ExpandPrincipalGroups ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : InvalidArgument: (:) [Get-AzRoleAssignment], ParameterBindingException
+    + FullyQualifiedErrorId : AmbiguousParameterSet,Microsoft.Azure.Commands.Resources.GetAzureRoleAssignmentCommand
+
+PS C:\Users\heero>
+PS C:\Users\heero> # Export the full list of role assignments to a CSV
+PS C:\Users\heero> $allRoleAssignments | Export-Csv -Path "C:\AzureRoleAssignments.csv" -NoTypeInformation
+Export-Csv : Access to the path 'C:\AzureRoleAssignments.csv' is denied.
+At line:1 char:23
++ ... signments | Export-Csv -Path "C:\AzureRoleAssignments.csv" -NoTypeInf ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OpenError: (:) [Export-Csv], UnauthorizedAccessException
+    + FullyQualifiedErrorId : FileOpenFailure,Microsoft.PowerShell.Commands.ExportCsvCommand
+
+PS C:\Users\heero>
+PS C:\Users\heero> # Filter and categorize direct assignments vs group-based assignments
+PS C:\Users\heero> $directAssignments = $allRoleAssignments | Where-Object { $_.PrincipalType -eq "User" }
+PS C:\Users\heero> $groupAssignments = $allRoleAssignments | Where-Object { $_.PrincipalType -eq "Group" }
+PS C:\Users\heero>
+PS C:\Users\heero> # Export direct and group-based assignments to separate files
+PS C:\Users\heero> $directAssignments | Export-Csv -Path "C:\AzureDirectAssignments.csv" -NoTypeInformation
+Export-Csv : Access to the path 'C:\AzureDirectAssignments.csv' is denied.
+At line:1 char:22
++ ... signments | Export-Csv -Path "C:\AzureDirectAssignments.csv" -NoTypeI ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OpenError: (:) [Export-Csv], UnauthorizedAccessException
+    + FullyQualifiedErrorId : FileOpenFailure,Microsoft.PowerShell.Commands.ExportCsvCommand
+
+PS C:\Users\heero> $groupAssignments | Export-Csv -Path "C:\AzureGroupAssignments.csv" -NoTypeInformation
+Export-Csv : Access to the path 'C:\AzureGroupAssignments.csv' is denied.
+At line:1 char:21
++ ... signments | Export-Csv -Path "C:\AzureGroupAssignments.csv" -NoTypeIn ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : OpenError: (:) [Export-Csv], UnauthorizedAccessException
+    + FullyQualifiedErrorId : FileOpenFailure,Microsoft.PowerShell.Commands.ExportCsvCommand
