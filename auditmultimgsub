@@ -1,0 +1,54 @@
+# Install the Az module if not already installed
+Install-Module -Name Az -AllowClobber -Scope CurrentUser -Force
+
+# Connect to Azure account
+Connect-AzAccount
+
+# Define the list of management groups
+$managementGroups = @(
+    "/providers/Microsoft.Management/managementGroups/9779ba47-ce34-4fa0-a698-002922878559",
+    "/providers/Microsoft.Management/managementGroups/MG1",
+    "/providers/Microsoft.Management/managementGroups/MG2"
+)
+
+# Define the list of subscription IDs
+$subscriptions = @(
+    "d51cb3fa-7290-407d-aa81-1bca0fcb2140",
+    "another-subscription-id-1234",
+    "yet-another-subscription-id-5678"
+)
+
+# Initialize an array to store role assignments
+$allRoleAssignments = @()
+
+# Function to retrieve role assignments for a given scope
+function Get-RoleAssignmentsForScope {
+    param (
+        [string]$scope
+    )
+    Write-Output "Fetching role assignments for scope: $scope"
+    $roleAssignments = Get-AzRoleAssignment -Scope $scope
+    $global:allRoleAssignments += $roleAssignments
+}
+
+# Retrieve role assignments for each management group
+foreach ($mg in $managementGroups) {
+    Get-RoleAssignmentsForScope -scope $mg
+}
+
+# Retrieve role assignments for each subscription
+foreach ($subscription in $subscriptions) {
+    Get-RoleAssignmentsForScope -scope "/subscriptions/$subscription"
+}
+
+# Export the full list of role assignments to a CSV
+$allRoleAssignments | Export-Csv -Path "C:\Users\heero\Documents\AzureRoleAssignments.csv" -NoTypeInformation
+
+# Filter and export direct assignments and group-based assignments
+$directAssignments = $allRoleAssignments | Where-Object { $_.PrincipalType -eq "User" }
+$groupAssignments = $allRoleAssignments | Where-Object { $_.PrincipalType -eq "Group" }
+
+$directAssignments | Export-Csv -Path "C:\Users\heero\Documents\AzureDirectAssignments.csv" -NoTypeInformation
+$groupAssignments | Export-Csv -Path "C:\Users\heero\Documents\AzureGroupAssignments.csv" -NoTypeInformation
+
+Write-Output "Export completed. Files saved to C:\Users\heero\Documents"
