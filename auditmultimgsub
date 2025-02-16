@@ -6,14 +6,14 @@ Connect-AzAccount
 
 # Define the list of management groups
 $managementGroups = @(
-    "/providers/Microsoft.Management/managementGroups/9779ba47-ce34-4fa0-a698-002922878559",
+    "/providers/Microsoft.Management/managementGroups/tenant id",
     "/providers/Microsoft.Management/managementGroups/MG1",
     "/providers/Microsoft.Management/managementGroups/MG2"
 )
 
 # Define the list of subscription IDs
 $subscriptions = @(
-    "d51cb3fa-7290-407d-aa81-1bca0fcb2140",
+    "sub1",
     "another-subscription-id-1234",
     "yet-another-subscription-id-5678"
 )
